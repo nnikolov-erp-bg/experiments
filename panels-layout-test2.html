@@ -7,21 +7,6 @@
             box-sizing: border-box;
         }
 
-        .masonry-grid {
-            /* It is split into 3 columns */
-            column-count: 3;
-
-            /* The space between columns */
-            column-gap: 1rem;
-            row-gap: 1rem;
-        }
-
-        .masonry-grid__item {
-            /* Prevent a column from breaking into multiple columns */
-            break-inside: avoid;
-            height: 200px;
-        }
-
         #panels {
             padding: 10px;
         }
@@ -44,10 +29,7 @@
         .panel {
             width: 100%;
             background-color: ghostwhite;
-        }
-
-        .panel.stack-end {
-            flex-grow: 1;
+            flex: 1;
         }
 
         .h500 {
@@ -70,35 +52,36 @@
 
     <div class="p-2">
 
-        <h4>Number of columns in a form:</h4>
-        <select id="columns-select" class="w-75">
-            <option>2</option>
-            <option>3</option>
-            <option>4</option>
-        </select>
         <h4>Panel types: </h4>
         <ul>
-            <li><b>sack</b> - stack panels are stacked vertically in a single column. The column always ends with a
-                stack-end panel.</li>
-            <li><b>sack-end</b> - the stack-end panel is the last panel in the column and occupies the rest of the
-                column height</li>
-            <li><b>fullrow</b> - fullrow panels occupy the whole row</li>
+            <li><b>default</b> - default panels are stacked vertically in a single column.</li>
+            <li><b>new-col</b> - panels of this type are placed in the beginning of new column.</li>
+            <li><b>new-row</b> - panels of this type are placed in the beginning of new row.</li>
         </ul>
         <h4>Panels </h4>
         <div><small>Enter as many panels as you like and then click [Refresh form]</small></div>
         <textarea id="panel-list" class="w-75" rows="8">
-            stack, stack-end, stack-end, 
-            stack-end, stack, stack, stack-end, 
-            fullrow, 
-            stack-end, stack-end, 
-            stack, 
-            fullrow
+            default,
+            new-col,
+            new-col,
+            default,
+            new-row,
+            default,
+            default,
+            new-row,
+            new-col,
+            new-row,
+            default,
+            new-col,
+            default,
+            new-row
         </textarea>
     </div>
     <div class="p-2">
         <button class="btn btn-primary" onclick="build()">Refresh form</button>
     </div>
-    <div class="alert alert-info m-2">In this example the content of the panels (the yellow box) is with random height between 10 and 300 px</div>
+    <div class="alert alert-info m-2">In this example the content of the panels (the yellow box) is with random height
+        between 10 and 300 px</div>
     <h2>Form</h2>
     <div id="panels">
 
@@ -109,34 +92,30 @@
         function build() {
             var panelsDiv = document.getElementById("panels");
             panelsDiv.innerHTML = "";
-            var containers = [];
-            var columns = parseInt(document.getElementById("columns-select").value);
+            
             var panels = document.getElementById("panel-list").value.split(',');
 
-            function createRow(addColumns) {
+            function createRow() {
                 let row = document.createElement("div");
                 row.classList.add("panel-row");
-                containers = [];
-                if (addColumns) {
-                    for (let i = 1; i <= columns; i++) {
-                        let col = document.createElement("div");
-                        col.classList.add("panel-col");
-                        row.append(col);
-                        containers.push(col);
-                    }
-                }
-
                 panelsDiv.appendChild(row);
-
                 return row;
             }
 
+            function createCol(row) {
+                let col = document.createElement("div");
+                col.classList.add("panel-col");
+                row.append(col);
+                return col;
+            }
+
             var i = 0;
-            var columnCount = 2;
+            var row = null;
+            var col = null;
             for (let pt of panels) {
                 pt = pt.trim();
                 var panel = document.createElement("div");
-               
+
                 panel.classList.add("card");
                 panel.classList.add("p-2");
                 panel.classList.add("panel");
@@ -148,20 +127,16 @@
 
                 panel.innerHTML = `<div> ${i + 1}..${pt}</div><div class='alert alert-warning m-0' style='height:${h}px'></div>`;
 
-                if (pt == "fullrow") {
-                    let row = createRow(false);
-                    row.append(panel);
+                if (pt == "new-row" || !col) {
+                    row = createRow();
+                    col = createCol(row);
                 }
-                else {
-                    if (containers.length == 0)
-                        createRow(true);
-
-                    var panelContainer = containers[0];
-                    panelContainer.append(panel);
-                    if (pt == "stack-end")
-                        containers.splice(0, 1);
-
+                else if(pt == "new-col") {
+                    col = createCol(row);
                 }
+
+
+                col.append(panel);
                 i++;
             }
         }
